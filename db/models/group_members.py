@@ -14,3 +14,5 @@ class GroupMember(db.Model):
     updated_at = db.Column(db.DateTime)
     deleted_at = db.Column(db.DateTime)
 
+    
+
