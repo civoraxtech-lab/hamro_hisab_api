@@ -3,8 +3,10 @@ flask-sqlalchemy
 flask-marshmallow 
 marshmallow-sqlalchemy
 Flask-Migrate 
+Flask-RESTX
 psycopg2-binary
 Faker
 PyJWT 
 flask-bcrypt
 python-dotenv
+gunicorn

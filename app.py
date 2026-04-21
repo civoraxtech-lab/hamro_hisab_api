@@ -2,6 +2,7 @@ from flask import Flask
 import os
 from dotenv import load_dotenv
 from flask_migrate import Migrate
+from flask_restx import Api
 from db import db, User, Group, Transaction, seed_data 
 from routes import auth_bp,personal_bp,group_bp
 
@@ -10,6 +11,9 @@ load_dotenv()
 
 def create_app():
     app = Flask(__name__)
+     #  RESTX Swagger UI
+    api = Api(app, doc="/docs")
+    
 
     # 1. Database Configuration
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
@@ -38,9 +42,8 @@ def create_app():
         seed_data()
         print("Database successfully seeded with Hamro Hisab test data!")
 
-    # 4. A simple health-check route
-    @app.route('/')
-    def index():
+    @app.route('/health')
+    def health():
         return {"message": "Hamro Hisab API is running", "status": "success"}
 
     return app
