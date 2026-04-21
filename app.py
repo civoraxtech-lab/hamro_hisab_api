@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 from db import db, User, Group, Transaction, seed_data 
-from routes.auth import auth_bp
+from routes import auth_bp,personal_bp,group_bp
 
 # Load the .env file
 load_dotenv()
@@ -14,8 +14,11 @@ def create_app():
     # 1. Database Configuration
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    # Inside your create_app() function:
+   
+    # Register various routes
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(personal_bp, url_prefix='/api/personal')
+    app.register_blueprint(group_bp, url_prefix='/api/group')
 
     # 2. Initialize Plugins
     db.init_app(app)

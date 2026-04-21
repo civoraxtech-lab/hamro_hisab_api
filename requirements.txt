@@ -1,0 +1,10 @@
+flask 
+flask-sqlalchemy 
+flask-marshmallow 
+marshmallow-sqlalchemy
+Flask-Migrate 
+psycopg2-binary
+Faker
+PyJWT 
+flask-bcrypt
+python-dotenv

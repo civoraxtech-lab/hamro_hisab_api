@@ -16,3 +16,4 @@ class Group(db.Model):
     updated_at = db.Column(db.DateTime)
     deleted_at = db.Column(db.DateTime)
 
+    members = db.relationship('GroupMember', backref='group', lazy=True)
