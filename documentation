@@ -1,0 +1,32 @@
+** Installed Packages **
+flask 
+flask-sqlalchemy 
+flask-marshmallow 
+marshmallow-sqlalchemy
+Flask-Migrate 
+psycopg2-binary
+Faker
+PyJWT 
+flask-bcrypt
+python-dotenv
+
+** Creating a Schema **
+Username for Postgres postgres
+Password postgres1234
+
+flask db init
+This creates a migrations/ folder in your project.
+
+flask db migrate -m "Initial Hamro Hisab table creation"
+This detects the changes in your models.py and creates a script in the versions folder.
+
+flask db upgrade
+This actually runs the SQL in your database to create the tables.
+
+if you want to write a update migration code
+flask db migrate -m "Added group_icon column to groups table"
+flask db upgrade
+
+** Generating a long String **
+python -c 'import secrets; print(secrets.token_hex(32))'
+This when written in command line generates a long string.
