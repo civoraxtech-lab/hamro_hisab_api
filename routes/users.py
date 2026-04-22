@@ -13,7 +13,7 @@ users_ns = Namespace('users', description='User management', path='/api/users')
 
 # --- Swagger request models ---
 phone_login_model = users_ns.model('PhoneLogin', {
-    'phone_number': fields.String(required=True, description='Phone number (auto-registers if new)', example='+977981234567')
+    'phone_number': fields.String(required=True, description='Phone number (auto-registers if user is new)', example='+977981234567')
 })
 
 verify_otp_model = users_ns.model('VerifyOtp', {
