@@ -1,29 +1,30 @@
-from flask import Blueprint,g,jsonify,request
+from flask import g, request
+from flask_restx import Namespace, Resource
 from utils.decorators import token_required
 from controllers.personal.dashboard import DashboardController
 from controllers.personal.transactions import TransactionController
 
-personal_bp = Blueprint('personal', __name__)
+personal_ns = Namespace('personal', description='Personal finance operations', path='/api/personal')
 
-# This runs the token check for EVERY route in this blueprint automatically
-@personal_bp.before_request
-@token_required
-def before_request(current_user):
-    g.user = current_user
+@personal_ns.route('/')
+class PersonalDashboard(Resource):
+    @personal_ns.doc(security='Bearer')
+    @token_required
+    def get(self):
+        try:
+            data = DashboardController.index(g.user)
+            return data, 200
+        except Exception as e:
+            return {"error": str(e)}, 500
 
-@personal_bp.route('/', methods=['GET'])
-def index():
-    try:
-        data = DashboardController.index(g.user)
-        return jsonify(data), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@personal_bp.route('/transactions/create', methods=['POST'])
-def create_transaction():
-    try:
-        data = request.get_json()
-        result = TransactionController.create(g.user, data)
-        return jsonify(result), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+@personal_ns.route('/transactions/create')
+class CreateTransaction(Resource):
+    @personal_ns.doc(security='Bearer')
+    @token_required
+    def post(self):
+        try:
+            data = request.get_json()
+            result = TransactionController.create(g.user, data)
+            return result, 200
+        except Exception as e:
+            return {"error": str(e)}, 500
