@@ -18,3 +18,5 @@ class Subscription(db.Model):
     updated_at = db.Column(db.DateTime)
     deleted_at = db.Column(db.DateTime)
 
+    user = db.relationship('User', backref='subscriptions')
+    subscription_type = db.relationship('SubscriptionType', backref='subscriptions')

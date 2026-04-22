@@ -8,7 +8,7 @@ class Liability(db.Model):
     __tablename__ = 'liabilities'
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     transaction_id = db.Column(UUID(as_uuid=True), db.ForeignKey('transactions.id'))
-    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
+    profile_id = db.Column(UUID(as_uuid=True), db.ForeignKey('profiles.id'))
     settlement_amount = db.Column(db.Numeric(15, 2))
     settled_amount = db.Column(db.Numeric(15, 2), default=0.0)
     initial_payer = db.Column(db.Boolean, default=False)
@@ -17,3 +17,5 @@ class Liability(db.Model):
     updated_at = db.Column(db.DateTime)
     deleted_at = db.Column(db.DateTime)
 
+    profile = db.relationship('Profile', backref='liabalities')
+   

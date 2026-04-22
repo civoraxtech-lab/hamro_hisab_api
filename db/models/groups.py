@@ -11,9 +11,10 @@ class Group(db.Model):
     icon = db.Column(db.String(255))
     description = db.Column(db.Text)
     require_verification = db.Column(db.Boolean, default=True)
-    created_by = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
+    created_by = db.Column(UUID(as_uuid=True), db.ForeignKey('profiles.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime)
     deleted_at = db.Column(db.DateTime)
 
     members = db.relationship('GroupMember', backref='group', lazy=True)
+   

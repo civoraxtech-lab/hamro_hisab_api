@@ -3,15 +3,17 @@ from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
 
-# Subscription Type Table (The "Who Owes What" Core)
-class SubscriptionType(db.Model):
-    __tablename__ = 'subscription_types'
+
+# Profile Table
+class Profile(db.Model):
+    __tablename__ = 'profiles'
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
     name = db.Column(db.String(100), nullable=False)
-    price = db.Column(db.Numeric(15, 2), nullable=False)
-    status = db.Column(db.String(20), default='ACTIVE')
+    is_default = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime)
     deleted_at = db.Column(db.DateTime)
 
-   
+    
+    user = db.relationship('User', backref='profiles')
