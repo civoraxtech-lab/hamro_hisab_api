@@ -27,6 +27,7 @@ def seed_data():
 
     # 2. Generate 1,000 Users
     users = []
+    profiles = []
     hashed_password = bcrypt.generate_password_hash("password123").decode('utf-8'),
     for _ in range(1000):
         user = User(
@@ -43,6 +44,17 @@ def seed_data():
     db.session.flush()
     print(f"✅ {len(users)} Users created.")
 
+    for user in users:
+        profile = Profile(
+            user_id = user.id,
+            name = "Home",
+            is_default = True
+        )
+        profiles.append(profile)
+    db.session.add_all(profiles)
+    db.session.flush()
+    print(f"✅ {len(profiles)} Profiles created.")
+
     # 3. Randomize Subscriptions for some users
     for user in random.sample(users, 300):
         sub = Subscription(
@@ -57,7 +69,7 @@ def seed_data():
     # 4. Create Groups and Memberships
     # We'll create 150 groups, each with 3-8 members
     for _ in range(150):
-        owner = random.choice(users)
+        owner = random.choice(profiles)
         new_group = Group(
             name=f"{fake.city()} Squad",
             description=fake.sentence(),
@@ -68,13 +80,13 @@ def seed_data():
 
         # Add 3-8 members to this group
         group_size = random.randint(3, 8)
-        members = random.sample(users, group_size)
+        members = random.sample(profiles, group_size)
         if owner not in members: members.append(owner)
 
         for member in members:
             is_admin = (member.id == owner.id)
             gm = GroupMember(
-                user_id=member.id,
+                profile_id=member.id,
                 group_id=new_group.id,
                 role_id=roles[0].id if is_admin else roles[1].id # Admin or Member
             )
@@ -101,7 +113,7 @@ def seed_data():
             for m in members:
                 liab = Liability(
                     transaction_id=trans.id,
-                    user_id=m.id,
+                    profile_id=m.id,
                     settlement_amount=split_amt,
                     initial_payer=(m.id == payer.id),
                     is_verified=True
