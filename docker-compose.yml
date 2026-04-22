@@ -3,7 +3,7 @@ services:
     build: .
     container_name: hamro_api
     ports:
-      - "5000:5000"
+      - "5001:5001"
     depends_on:
       - db
     env_file:

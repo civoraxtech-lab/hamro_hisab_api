@@ -24,7 +24,7 @@ ENV FLASK_APP=app:create_app
 ENV FLASK_RUN_HOST=0.0.0.0
 ENV PYTHONPATH=/app
 
-EXPOSE 5000
+EXPOSE 5001
 
 # For dev (auto-reload)
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "app:create_app()"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5001", "app:create_app()"]

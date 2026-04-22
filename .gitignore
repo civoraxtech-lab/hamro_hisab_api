@@ -1,6 +1,9 @@
 # Environments
 .env
 venv/
+Dockerfile
+docker-compose.yml
+.gitignore
 
 # Python cache
 __pycache__/
