@@ -21,5 +21,5 @@ class Transaction(db.Model):
     category = db.relationship('Category', backref='transactions')
     group = db.relationship('Group', backref='transactions')
     transaction_type = db.relationship('TransactionType', backref='transactions')
-
+    liabilities = db.relationship('Liability', backref='transaction')
 
