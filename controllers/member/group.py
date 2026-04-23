@@ -1,6 +1,6 @@
 
 from db import db
-from db.models import Group, GroupMember
+from db.models import Group, GroupMember,GroupRole
 from datetime import datetime,timezone
 
 class GroupController:
@@ -11,7 +11,8 @@ class GroupController:
         
     @staticmethod
     def create(data):
-        item = Category(
+        
+        item = Group(
             name=data['name'],
             description=data.get('description'),
             icon=data.get('icon'),
@@ -20,16 +21,18 @@ class GroupController:
         )
         db.session.add(item)
         db.session.flush()
-
-        # Auto-add creator as a member
+        
+        role = GroupRole.query.filter_by(name="ADMIN", deleted_at=None).first()
+        role.to_dict
         member = GroupMember(
             profile_id=data['profile_id'],
-            group_id=item.id
+            group_id=item.id,
+            role_id=role.id
         )
         db.session.add(member)
         db.session.commit()
-       
-        return item
+
+        return item.to_dict,201
 
     @staticmethod
     def show(group_id):
@@ -77,9 +80,9 @@ class GroupController:
         item = GroupMember(
             group_id=group_id,
             profile_id=data['profile_id'],
-            role_id=data.get('role_id')
+            role_id=data['role_id']
         )
-        db.session.add(member)
+        db.session.add(item)
         db.session.commit()
         return item, 201
 
