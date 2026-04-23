@@ -6,7 +6,7 @@ stop:
 
 checkout url
 for api docs
-http://localhost:5000/docs
+http://localhost:5001/docs
 
 for gui database
 http://localhost:8080/

@@ -6,6 +6,7 @@ Dockerfile
 # Python cache
 __pycache__/
 *.pyc
+**/__pycache__/
 
 # IDEs
 .vscode/
