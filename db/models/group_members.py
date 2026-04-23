@@ -14,5 +14,16 @@ class GroupMember(db.Model):
     updated_at = db.Column(db.DateTime)
     deleted_at = db.Column(db.DateTime)
 
+    @property
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'profile_id': str(self.profile_id) if self.profile_id else None,
+            'group_id': str(self.group_id) if self.group_id else None,
+            'role_id': str(self.role_id) if self.role_id else None,
+            'created_at': str(self.created_at)
+        }
+
+
     
     
