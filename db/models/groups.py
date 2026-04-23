@@ -18,3 +18,14 @@ class Group(db.Model):
 
     members = db.relationship('GroupMember', backref='group', lazy=True)
    
+    @property
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'name': self.name,
+            'description': self.description,
+            'icon': self.icon,
+            'require_verification': self.require_verification,
+            'created_by': str(self.created_by) if self.created_by else None,
+            'created_at': str(self.created_at)
+        }

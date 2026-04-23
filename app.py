@@ -73,7 +73,6 @@ def create_app():
         token = generateToken(user)
         print(f"\nUser:  {user.email}")
         print(f"Token: Bearer {token}\n")
-        
     return app
 
 if __name__ == '__main__':
