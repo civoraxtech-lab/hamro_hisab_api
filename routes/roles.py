@@ -16,23 +16,13 @@ update_model = roles_ns.model('UpdateRole', {
     'status': fields.String(example='ACTIVE')
 })
 
-
-def serialize(r):
-    return {
-        'id': str(r.id),
-        'name': r.name,
-        'status': r.status,
-        'created_at': str(r.created_at)
-    }
-
-
 @roles_ns.route('/')
 class RoleList(Resource):
     @roles_ns.doc(security='Bearer')
     @token_required
     def get(self):
         """List all roles"""
-        items = Role.query.filter_by(deleted_at=None).all()
+        items = GroupRole.query.filter_by(deleted_at=None).all()
         return [serialize(r) for r in items], 200
 
     @roles_ns.doc(security='Bearer')
@@ -41,7 +31,7 @@ class RoleList(Resource):
     def post(self):
         """Create a role"""
         data = request.json
-        item = Role(name=data['name'], status=data.get('status', 'ACTIVE'))
+        item = GroupRole(name=data['name'], status=data.get('status', 'ACTIVE'))
         db.session.add(item)
         db.session.commit()
         return {'message': 'Role created', 'id': str(item.id)}, 201
@@ -53,7 +43,7 @@ class RoleDetail(Resource):
     @token_required
     def get(self, role_id):
         """Get a role by ID"""
-        item = Role.query.filter_by(id=role_id, deleted_at=None).first()
+        item = GroupRole.query.filter_by(id=role_id, deleted_at=None).first()
         if not item:
             return {'message': 'Role not found'}, 404
         return serialize(item), 200
@@ -63,7 +53,7 @@ class RoleDetail(Resource):
     @token_required
     def put(self, role_id):
         """Update a role"""
-        item = Role.query.filter_by(id=role_id, deleted_at=None).first()
+        item = GroupRole.query.filter_by(id=role_id, deleted_at=None).first()
         if not item:
             return {'message': 'Role not found'}, 404
         data = request.json
@@ -78,7 +68,7 @@ class RoleDetail(Resource):
     @token_required
     def delete(self, role_id):
         """Delete a role"""
-        item = Role.query.filter_by(id=role_id, deleted_at=None).first()
+        item = GroupRole.query.filter_by(id=role_id, deleted_at=None).first()
         if not item:
             return {'message': 'Role not found'}, 404
         item.deleted_at = datetime.now(timezone.utc)

@@ -13,3 +13,11 @@ class GroupRole(db.Model):
     updated_at = db.Column(db.DateTime)
     deleted_at = db.Column(db.DateTime)
 
+    @property
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'name': self.name,
+            'status': self.status,
+            'created_at': str(self.created_at)
+        }

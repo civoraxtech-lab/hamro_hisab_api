@@ -95,7 +95,7 @@ class GroupMemberList(Resource):
     @group_ns.expect(add_member_model)
     @token_required
     def post(self, group_id):
-        item, status_code = GroupController.createMember(request.json)
+        item, status_code = GroupController.createMember(group_id,request.json)
         if status_code == 409:
             return {
                 'message': 'Member already exists in this group',
