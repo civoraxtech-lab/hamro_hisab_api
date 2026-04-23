@@ -12,3 +12,7 @@ for gui database
 http://localhost:8080/
 
 ready 
+
+docker compose up --build -d
+docker compose down -v
+docker exec -it hamro_api flask clicommand

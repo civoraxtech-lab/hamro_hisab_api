@@ -10,6 +10,7 @@ from routes import (
     subscriptions_ns, subscription_types_ns, subscription_codes_ns,
     roles_ns, personal_ns
 )
+from utils.decorators import generateToken
 
 load_dotenv()
 
@@ -68,23 +69,11 @@ def create_app():
 
     @app.cli.command("get-token")
     def get_token():
-        import jwt
-        from datetime import datetime, timezone, timedelta
         user = User.query.first()
-        if not user:
-            print("No users found. Run: flask db-seed")
-            return
-        token = jwt.encode({
-            'user_id': str(user.id),
-            'exp': datetime.now(timezone.utc) + timedelta(hours=24)
-        }, os.getenv('SECRET_KEY'), algorithm="HS256")
+        token = generateToken(user)
         print(f"\nUser:  {user.email}")
         print(f"Token: Bearer {token}\n")
-
-    @app.route('/health')
-    def health():
-        return {"message": "Hamro Hisab API is running", "status": "success"}
-
+        
     return app
 
 if __name__ == '__main__':

@@ -3,6 +3,9 @@ import os
 from flask import request, g
 from functools import wraps
 from db.models import User
+from datetime import datetime, timedelta
+
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 def token_required(f):
     @wraps(f)
@@ -30,3 +33,16 @@ def token_required(f):
         return f(*args, **kwargs)
 
     return decorated
+
+def generateToken(user):
+    if not user:
+        print("No users found. Run: flask db-seed")
+        return
+    token = jwt.encode({
+            'user_id': str(user.id),
+            'exp': datetime.utcnow() + timedelta(hours=24)
+    }, SECRET_KEY, algorithm="HS256")
+    
+    return token
+
+        

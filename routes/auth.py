@@ -6,6 +6,7 @@ from flask import request
 from flask_restx import Namespace, Resource
 from db import User
 from flask_bcrypt import check_password_hash
+from utils.decorators import generateToken
 
 load_dotenv()
 
@@ -19,10 +20,7 @@ class Login(Resource):
         user = User.query.filter_by(email=data.get('email')).first()
 
         if user and check_password_hash(user.password, data['password']):
-            token = jwt.encode({
-                'user_id': str(user.id),
-                'exp': datetime.utcnow() + timedelta(hours=24)
-            }, SECRET_KEY, algorithm="HS256")
+            token = generateToken(user)
 
             return {'token': token, 'user': {'firstname': user.firstname, 'id': user.id}}
 

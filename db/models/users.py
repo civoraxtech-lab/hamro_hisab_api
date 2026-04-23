@@ -7,6 +7,7 @@ from datetime import datetime
 class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    role_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user_roles.id'))
     firstname = db.Column(db.String(50), nullable=False)
     lastname = db.Column(db.String(50), nullable=False)
     password = db.Column(db.String(255), nullable=False)

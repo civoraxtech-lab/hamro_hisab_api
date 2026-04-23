@@ -11,7 +11,8 @@ bcrypt = Bcrypt()
 
 def seed_data():
     print("Starting Seeder")
-    roles = [Role(name=n) for n in ['ADMIN', 'MEMBER']]
+    user_roles = [UserRole(name=n) for n in ['SUPERADMIN', 'ADMIN', 'MEMBER']]
+    group_roles = [GroupRole(name=n) for n in ['ADMIN', 'MEMBER']]
     t_types = [TransactionType(name=n) for n in ['EXPENSE', 'SETTLEMENT', 'ADJUSTMENT']]
     sub_types = [
         SubscriptionType(name='Monthly Basic', price=499.00),
@@ -22,7 +23,7 @@ def seed_data():
         for n in ['Food', 'Rent', 'Travel', 'Shopping', 'Others']
     ]
 
-    db.session.add_all(roles + t_types + sub_types + categories)
+    db.session.add_all(user_roles + group_roles + t_types + sub_types + categories)
     db.session.flush()
 
     # 2. Generate 1,000 Users
@@ -31,6 +32,7 @@ def seed_data():
     hashed_password = bcrypt.generate_password_hash("password123").decode('utf-8'),
     for _ in range(1000):
         user = User(
+            role_id = user_roles[2].id,
             firstname=fake.first_name(),
             lastname=fake.last_name(),
             email=fake.unique.email(),
@@ -88,7 +90,7 @@ def seed_data():
             gm = GroupMember(
                 profile_id=member.id,
                 group_id=new_group.id,
-                role_id=roles[0].id if is_admin else roles[1].id # Admin or Member
+                role_id=group_roles[0].id if is_admin else group_roles[1].id # Admin or Member
             )
             db.session.add(gm)
         
