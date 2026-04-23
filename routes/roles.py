@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from flask import request
 from flask_restx import Namespace, Resource, fields
-from db import db, Role
+from db import db, GroupRole
 from utils.decorators import token_required
 
 roles_ns = Namespace('roles', description='Role operations', path='/api/roles')

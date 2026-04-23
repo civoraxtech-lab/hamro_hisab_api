@@ -3,9 +3,9 @@ from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
 
-# Roles Table
-class Role(db.Model):
-    __tablename__ = 'roles'
+# GroupRoles Table
+class GroupRole(db.Model):
+    __tablename__ = 'group_roles'
     id = db.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = db.Column(db.String(100), nullable=False)
     status = db.Column(db.String(20), default='ACTIVE')

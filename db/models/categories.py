@@ -17,4 +17,15 @@ class Category(db.Model):
     updated_at = db.Column(db.DateTime)
     deleted_at = db.Column(db.DateTime)
 
+    @property
+    def to_dict(self):
+        return {
+            'id': str(self.id),
+            'name': self.name,
+            'icon': self.icon,
+            'iconColor': self.iconColor,
+            'is_default': self.is_default,
+            'created_by': str(self.created_by) if self.created_by else None
+        }
+
     
