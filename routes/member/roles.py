@@ -3,7 +3,7 @@ from flask import request
 from flask_restx import Namespace, Resource, fields
 from db import db, GroupRole
 from utils.decorators import token_required
-from controllers.member.group_roles import GroupRoleController
+from controllers.admin.group_roles import GroupRoleController
 
 roles_ns = Namespace('roles', description='Role operations', path='/api/roles')
 

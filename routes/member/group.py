@@ -3,7 +3,7 @@ from flask import g, request
 from flask_restx import Namespace, Resource, fields
 from db import db, Group, GroupMember
 from utils.decorators import token_required
-from controllers.member.group import GroupController
+from controllers.admin.group import GroupController
 
 group_ns = Namespace('groups', description='Group operations', path='/api/groups')
 
