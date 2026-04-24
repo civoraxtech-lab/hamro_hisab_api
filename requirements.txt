@@ -10,3 +10,4 @@ PyJWT
 flask-bcrypt
 python-dotenv
 gunicorn
+flask-cors

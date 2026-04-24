@@ -2,7 +2,7 @@ import os
 from flask import Flask
 from dotenv import load_dotenv
 from db.database import db
-from core.extensions import migrate, api
+from core.extensions import migrate, api, cors
 from core.commands import register_commands
 from routes import (
     auth_ns, users_ns, profiles_ns, categories_ns,
@@ -23,6 +23,7 @@ def create_app():
     # Initialize Extensions
     db.init_app(app)
     migrate.init_app(app, db)
+    cors.init_app(app)
     api.init_app(app) # Initialize API with the app
 
     # Register Namespaces

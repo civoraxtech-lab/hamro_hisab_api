@@ -2,6 +2,7 @@
 from db import db
 from db.models import Group, GroupMember,GroupRole
 from datetime import datetime,timezone
+from utils.context import get_active_profile
 
 class GroupController:
     @staticmethod
@@ -10,14 +11,14 @@ class GroupController:
         return [g.to_dict for g in items], 200
         
     @staticmethod
-    def create(data):
-        
+    def create(data, user_id):
+        active_profile = get_active_profile(user_id)
         item = Group(
             name=data['name'],
             description=data.get('description'),
             icon=data.get('icon'),
             require_verification=data.get('require_verification', True),
-            created_by=data['profile_id']
+            created_by=active_profile.id
         )
         db.session.add(item)
         db.session.flush()
@@ -25,14 +26,14 @@ class GroupController:
         role = GroupRole.query.filter_by(name="ADMIN", deleted_at=None).first()
         role.to_dict
         member = GroupMember(
-            profile_id=data['profile_id'],
+            profile_id=active_profile.id,
             group_id=item.id,
             role_id=role.id
         )
         db.session.add(member)
         db.session.commit()
 
-        return item.to_dict,201
+        return item
 
     @staticmethod
     def show(group_id):
