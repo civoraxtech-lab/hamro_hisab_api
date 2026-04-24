@@ -3,7 +3,7 @@ from flask import g, request
 from flask_restx import Namespace, Resource, fields
 from db import db, Category
 from utils.decorators import token_required
-from controllers.member.category import CategoryController
+from controllers.admin.category import CategoryController
 
 
 categories_ns = Namespace('categories', description='Category operations', path='/api/categories')

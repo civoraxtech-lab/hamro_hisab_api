@@ -3,7 +3,7 @@ from flask import request
 from flask_restx import Namespace, Resource, fields
 from db import db, Liability
 from utils.decorators import token_required
-from controllers.member.liabilities import LiabilityController
+from controllers.admin.liabilities import LiabilityController
 
 liabilities_ns = Namespace('liabilities', description='Liability operations', path='/api/liabilities')
 
