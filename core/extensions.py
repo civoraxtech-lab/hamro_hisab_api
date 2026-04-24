@@ -1,5 +1,7 @@
 from flask_migrate import Migrate
 from flask_restx import Api
+from flask_cors import CORS
+
 
 migrate = Migrate()
 
@@ -9,14 +11,22 @@ authorizations = {
         'in': 'header',
         'name': 'Authorization',
         'description': "Paste your token as: **Bearer &lt;your_token&gt;**"
+    },
+    'Profile': {
+        'type': 'apiKey',
+        'in': 'header',
+        'name': 'X-Profile-ID',
+        'description': "Paste the **Profile UUID** here"
     }
 }
-
 api = Api(
     doc="/docs",
     title="Hamro Hisab API",
     version="1.0",
     description="Personal and group expense tracker",
     authorizations=authorizations,
-    security='Bearer'
+    security=['Bearer', 'Profile']
+)
+cors = CORS(expose_headers=['X-Profile-ID'], 
+    allow_headers=['Authorization', 'X-Profile-ID', 'Content-Type']
 )

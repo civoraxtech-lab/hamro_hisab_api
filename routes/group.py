@@ -11,8 +11,7 @@ create_group_model = group_ns.model('CreateGroup', {
     'name': fields.String(required=True, example='Trip to Pokhara'),
     'description': fields.String(example='Expense splitting for our trip'),
     'icon': fields.String(example='trip-icon'),
-    'require_verification': fields.Boolean(example=True),
-    'profile_id': fields.String(required=True, example='uuid-here')
+    'require_verification': fields.Boolean(example=True)
 })
 
 update_group_model = group_ns.model('UpdateGroup', {
@@ -38,11 +37,11 @@ class GroupList(Resource):
         items = GroupController.index()
         return items, 200
 
-    @group_ns.doc(security='Bearer')
+    @group_ns.doc(security=['Bearer', 'Profile'])
     @group_ns.expect(create_group_model)
     @token_required
     def post(self):
-        item = GroupController.create(request.json)
+        item = GroupController.create(request.json, g.user.id)
         return {'message': 'Group created', 'id': str(item.id)}, 201
         
 

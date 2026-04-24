@@ -1,4 +1,3 @@
-
 from db import db
 from db.models import Liability
 from sqlalchemy.orm import joinedload
