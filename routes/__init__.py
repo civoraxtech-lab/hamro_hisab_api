@@ -4,6 +4,7 @@ from .member.profiles import profiles_ns
 from .member.categories import categories_ns
 from .member.group import group_ns
 from .member.transactions import transactions_ns
+from .member.transaction_types import transaction_types_ns
 from .member.liabilities import liabilities_ns
 from .member.subscriptions import subscriptions_ns
 from .member.subscription_types import subscription_types_ns

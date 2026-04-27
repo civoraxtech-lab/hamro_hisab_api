@@ -18,6 +18,8 @@ class Transaction(db.Model):
     updated_at = db.Column(db.DateTime)
     deleted_at = db.Column(db.DateTime)
 
+    created_by = db.Column(UUID(as_uuid=True), db.ForeignKey('users.id'))
+
     category = db.relationship('Category', backref='transactions')
     group = db.relationship('Group', backref='transactions')
     transaction_type = db.relationship('TransactionType', backref='transactions')

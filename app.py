@@ -6,7 +6,7 @@ from core.extensions import migrate, api, cors
 from core.commands import register_commands
 from routes import (
     auth_ns, users_ns, profiles_ns, categories_ns,
-    group_ns, transactions_ns, liabilities_ns,
+    group_ns, transactions_ns, transaction_types_ns, liabilities_ns,
     subscriptions_ns, subscription_types_ns, subscription_codes_ns,
     roles_ns, personal_ns
 )
@@ -29,7 +29,7 @@ def create_app():
     # Register Namespaces
     namespaces = [
         auth_ns, users_ns, profiles_ns, categories_ns,
-        group_ns, transactions_ns, liabilities_ns,
+        group_ns, transactions_ns, transaction_types_ns, liabilities_ns,
         subscriptions_ns, subscription_types_ns, subscription_codes_ns,
         roles_ns, personal_ns
     ]
