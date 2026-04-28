@@ -9,24 +9,15 @@ from flask_bcrypt import generate_password_hash
 from db import db, User, OneTimePassword
 from utils.decorators import token_required
 
-users_ns = Namespace('users', description='User management', path='/api/users')
+users_ns = Namespace('users', description='User auth and profile', path='/api/users')
 
-# --- Swagger request models ---
 phone_login_model = users_ns.model('PhoneLogin', {
-    'phone_number': fields.String(required=True, description='Phone number (auto-registers if user is new)', example='+977981234567')
+    'phone_number': fields.String(required=True, example='+977981234567')
 })
 
 verify_otp_model = users_ns.model('VerifyOtp', {
-    'phone_number': fields.String(required=True, description='Phone number'),
-    'otp': fields.String(required=True, description='6-digit OTP', example='123456')
-})
-
-create_user_model = users_ns.model('CreateUser', {
-    'firstname': fields.String(required=True, example='Ram'),
-    'lastname': fields.String(required=True, example='Thapa'),
-    'email': fields.String(required=True, example='ram@example.com'),
-    'phone': fields.String(required=True, example='+977981234567'),
-    'password': fields.String(required=True, example='password123')
+    'phone_number': fields.String(required=True),
+    'otp': fields.String(required=True, example='123456')
 })
 
 update_user_model = users_ns.model('UpdateUser', {
@@ -38,19 +29,14 @@ update_user_model = users_ns.model('UpdateUser', {
 })
 
 
-# --- Phone OTP login ---
-
 @users_ns.route('/login/phone')
 class PhoneLogin(Resource):
     @users_ns.expect(phone_login_model)
     def post(self):
-        """Step 1: Enter phone number — auto-registers if new, then sends OTP"""
+        """Step 1: Enter phone — auto-registers if new, sends OTP"""
         phone = request.json.get('phone_number')
-
         user = User.query.filter_by(phone=phone).first()
-
         if not user:
-            # Auto-register with temporary placeholder data
             temp_id = str(uuid.uuid4())[:8]
             user = User(
                 firstname='User',
@@ -60,9 +46,8 @@ class PhoneLogin(Resource):
                 password=generate_password_hash(str(uuid.uuid4())).decode('utf-8')
             )
             db.session.add(user)
-            db.session.flush()  # get user.id before commit
+            db.session.flush()
 
-        # Invalidate any previous unused OTPs for this phone
         OneTimePassword.query.filter_by(
             phone_or_email=phone, purpose='LOGIN', is_used=False
         ).update({'is_used': True})
@@ -77,8 +62,6 @@ class PhoneLogin(Resource):
         )
         db.session.add(otp)
         db.session.commit()
-
-        # TODO: send via SMS in production — returning otp here for dev/testing only
         return {'message': 'OTP sent successfully', 'otp': code}, 200
 
 
@@ -86,18 +69,14 @@ class PhoneLogin(Resource):
 class VerifyOtp(Resource):
     @users_ns.expect(verify_otp_model)
     def post(self):
-        """Step 2: Verify OTP and receive JWT access token"""
+        """Step 2: Verify OTP and receive JWT"""
         data = request.json
         phone = data.get('phone_number')
         code = data.get('otp')
 
         otp = OneTimePassword.query.filter_by(
-            phone_or_email=phone,
-            code=code,
-            purpose='LOGIN',
-            is_used=False
+            phone_or_email=phone, code=code, purpose='LOGIN', is_used=False
         ).first()
-
         if not otp:
             return {'message': 'Invalid OTP'}, 401
 
@@ -111,18 +90,54 @@ class VerifyOtp(Resource):
         db.session.commit()
 
         user = User.query.get(otp.user_id)
-        access_token = jwt.encode({
-            'user_id': str(user.id),
-            'exp': datetime.now(timezone.utc) + timedelta(hours=24)
-        }, os.getenv('SECRET_KEY'), algorithm="HS256")
-
-        return {
-            'access_token': access_token,
-            'token_type': 'bearer'
-        }, 200
+        access_token = jwt.encode(
+            {'user_id': str(user.id), 'exp': datetime.now(timezone.utc) + timedelta(hours=24)},
+            os.getenv('SECRET_KEY'),
+            algorithm='HS256'
+        )
+        return {'access_token': access_token, 'token_type': 'bearer'}, 200
 
 
-# --- Me ---
+@users_ns.route('/search')
+class UserSearch(Resource):
+    @users_ns.doc(security='Bearer', params={'q': 'Search by name, email, phone or code (min 2 chars)'})
+    @token_required
+    def get(self):
+        """Search users by name, email, phone or code"""
+        from db.models import Profile
+        q = request.args.get('q', '').strip()
+        if len(q) < 2:
+            return [], 200
+        current_user_id = g.user.id
+        users = User.query.filter(
+            db.or_(
+                User.firstname.ilike(f'%{q}%'),
+                User.lastname.ilike(f'%{q}%'),
+                User.email.ilike(f'%{q}%'),
+                User.phone.ilike(f'%{q}%'),
+                User.code.ilike(f'%{q}%'),
+            ),
+            User.deleted_at == None,
+            User.id != current_user_id,
+        ).limit(20).all()
+
+        result = []
+        for u in users:
+            profile = Profile.query.filter_by(user_id=u.id, is_default=True, deleted_at=None).first()
+            if not profile:
+                profile = Profile.query.filter_by(user_id=u.id, deleted_at=None).first()
+            result.append({
+                'id': str(u.id),
+                'firstname': u.firstname,
+                'lastname': u.lastname,
+                'email': u.email,
+                'phone': u.phone,
+                'image': u.image,
+                'code': u.code,
+                'profile_id': str(profile.id) if profile else None,
+            })
+        return result, 200
+
 
 @users_ns.route('/me')
 class Me(Resource):
@@ -130,16 +145,16 @@ class Me(Resource):
     @token_required
     def get(self):
         """Get the currently authenticated user"""
-        user = g.user
+        u = g.user
         return {
-            'id': str(user.id),
-            'firstname': user.firstname,
-            'lastname': user.lastname,
-            'email': user.email,
-            'phone': user.phone,
-            'image': user.image,
-            'code': user.code,
-            'created_at': str(user.created_at)
+            'id': str(u.id),
+            'firstname': u.firstname,
+            'lastname': u.lastname,
+            'email': u.email,
+            'phone': u.phone,
+            'image': u.image,
+            'code': u.code,
+            'created_at': str(u.created_at)
         }, 200
 
     @users_ns.doc(security='Bearer')
@@ -155,94 +170,3 @@ class Me(Resource):
         user.updated_at = datetime.now(timezone.utc)
         db.session.commit()
         return {'message': 'Profile updated successfully'}, 200
-
-
-# --- CRUD ---
-
-@users_ns.route('/')
-class UserList(Resource):
-    @users_ns.doc(security='Bearer')
-    @token_required
-    def get(self):
-        """List all active users"""
-        users = User.query.filter_by(deleted_at=None).all()
-        return [{
-            'id': str(u.id),
-            'firstname': u.firstname,
-            'lastname': u.lastname,
-            'email': u.email,
-            'phone': u.phone,
-            'image': u.image,
-            'code': u.code
-        } for u in users], 200
-
-    @users_ns.expect(create_user_model)
-    def post(self):
-        """Register a new user"""
-        data = request.json
-
-        if User.query.filter_by(email=data.get('email')).first():
-            return {'message': 'Email already registered'}, 409
-        if User.query.filter_by(phone=data.get('phone')).first():
-            return {'message': 'Phone already registered'}, 409
-
-        user = User(
-            firstname=data['firstname'],
-            lastname=data['lastname'],
-            email=data['email'],
-            phone=data['phone'],
-            password=generate_password_hash(data['password']).decode('utf-8')
-        )
-        db.session.add(user)
-        db.session.commit()
-        return {'message': 'User created successfully', 'id': str(user.id)}, 201
-
-
-@users_ns.route('/<string:user_id>')
-class UserDetail(Resource):
-    @users_ns.doc(security='Bearer')
-    @token_required
-    def get(self, user_id):
-        """Get a user by ID"""
-        user = User.query.filter_by(id=user_id, deleted_at=None).first()
-        if not user:
-            return {'message': 'User not found'}, 404
-        return {
-            'id': str(user.id),
-            'firstname': user.firstname,
-            'lastname': user.lastname,
-            'email': user.email,
-            'phone': user.phone,
-            'image': user.image,
-            'code': user.code,
-            'created_at': str(user.created_at)
-        }, 200
-
-    @users_ns.doc(security='Bearer')
-    @users_ns.expect(update_user_model)
-    @token_required
-    def put(self, user_id):
-        """Update a user"""
-        user = User.query.filter_by(id=user_id, deleted_at=None).first()
-        if not user:
-            return {'message': 'User not found'}, 404
-
-        data = request.json
-        for field in ['firstname', 'lastname', 'email', 'phone', 'image']:
-            if field in data:
-                setattr(user, field, data[field])
-        user.updated_at = datetime.now(timezone.utc)
-        db.session.commit()
-        return {'message': 'User updated successfully'}, 200
-
-    @users_ns.doc(security='Bearer')
-    @token_required
-    def delete(self, user_id):
-        """Soft delete a user"""
-        user = User.query.filter_by(id=user_id, deleted_at=None).first()
-        if not user:
-            return {'message': 'User not found'}, 404
-
-        user.deleted_at = datetime.now(timezone.utc)
-        db.session.commit()
-        return {'message': 'User deleted successfully'}, 200

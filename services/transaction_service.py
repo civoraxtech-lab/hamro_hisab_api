@@ -3,7 +3,7 @@ from db import db
 from db.models import Transaction, Liability
 
 
-def create_transaction(profile, data):
+def create(profile, data):
     if not data.get('title') or not data.get('amount'):
         raise ValueError("title and amount are required")
 
@@ -31,7 +31,7 @@ def create_transaction(profile, data):
     return tx
 
 
-def update_transaction(transaction_id, profile_id, data):
+def update(transaction_id, profile_id, data):
     tx = Transaction.query.filter_by(id=transaction_id, profile_id=profile_id, deleted_at=None).first()
     if not tx:
         return None
@@ -58,7 +58,7 @@ def update_transaction(transaction_id, profile_id, data):
     return tx
 
 
-def delete_transaction(transaction_id, profile_id):
+def delete(transaction_id, profile_id):
     tx = Transaction.query.filter_by(id=transaction_id, profile_id=profile_id, deleted_at=None).first()
     if not tx:
         return False
