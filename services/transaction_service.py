@@ -3,7 +3,7 @@ from db import db
 from db.models import Transaction, Liability
 
 
-def create_transaction(profile, user, data):
+def create_transaction(profile, data):
     if not data.get('title') or not data.get('amount'):
         raise ValueError("title and amount are required")
 
@@ -15,7 +15,7 @@ def create_transaction(profile, user, data):
         type_id=data.get('type_id'),
         description=data.get('description'),
         date=datetime.fromisoformat(data['date']) if data.get('date') else datetime.now(timezone.utc),
-        created_by=user.id,
+        profile_id=profile.id,
     )
     db.session.add(tx)
     db.session.flush()
@@ -31,8 +31,8 @@ def create_transaction(profile, user, data):
     return tx
 
 
-def update_transaction(transaction_id, user_id, data):
-    tx = Transaction.query.filter_by(id=transaction_id, created_by=user_id, deleted_at=None).first()
+def update_transaction(transaction_id, profile_id, data):
+    tx = Transaction.query.filter_by(id=transaction_id, profile_id=profile_id, deleted_at=None).first()
     if not tx:
         return None
 
@@ -58,8 +58,8 @@ def update_transaction(transaction_id, user_id, data):
     return tx
 
 
-def delete_transaction(transaction_id, user_id):
-    tx = Transaction.query.filter_by(id=transaction_id, created_by=user_id, deleted_at=None).first()
+def delete_transaction(transaction_id, profile_id):
+    tx = Transaction.query.filter_by(id=transaction_id, profile_id=profile_id, deleted_at=None).first()
     if not tx:
         return False
 

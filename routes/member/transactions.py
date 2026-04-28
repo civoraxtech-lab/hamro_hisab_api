@@ -68,7 +68,7 @@ class TransactionList(Resource):
         """Create a transaction and its initial liability"""
         profile = get_active_profile(g.user.id)
         try:
-            item = create_transaction(profile, g.user, request.json)
+            item = create_transaction(profile, request.json)
             return {'message': 'Transaction created', 'id': str(item.id)}, 201
         except ValueError as e:
             return {'error': str(e)}, 400
@@ -82,7 +82,8 @@ class TransactionDetail(Resource):
     @token_required
     def get(self, transaction_id):
         """Get a transaction by ID"""
-        item = Transaction.query.filter_by(id=transaction_id, created_by=g.user.id, deleted_at=None).first()
+        profile = get_active_profile(g.user.id)
+        item = Transaction.query.filter_by(id=transaction_id, profile_id=profile.id, deleted_at=None).first()
         if not item:
             return {'message': 'Transaction not found'}, 404
         return serialize(item), 200
@@ -92,7 +93,8 @@ class TransactionDetail(Resource):
     @token_required
     def put(self, transaction_id):
         """Update a transaction and its initial liability"""
-        item = update_transaction(transaction_id, g.user.id, request.json)
+        profile = get_active_profile(g.user.id)
+        item = update_transaction(transaction_id, profile.id, request.json)
         if not item:
             return {'message': 'Transaction not found'}, 404
         return {'message': 'Transaction updated'}, 200
@@ -101,6 +103,7 @@ class TransactionDetail(Resource):
     @token_required
     def delete(self, transaction_id):
         """Delete a transaction and its liabilities"""
-        if not delete_transaction(transaction_id, g.user.id):
+        profile = get_active_profile(g.user.id)
+        if not delete_transaction(transaction_id, profile.id):
             return {'message': 'Transaction not found'}, 404
         return {'message': 'Transaction deleted'}, 200
