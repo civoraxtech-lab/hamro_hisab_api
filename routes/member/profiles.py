@@ -58,7 +58,7 @@ class ProfileDetail(Resource):
     @token_required
     def get(self, profile_id):
         """Get a profile by ID"""
-        item = Profile.query.filter_by(id=profile_id, deleted_at=None).first()
+        item = Profile.query.filter_by(id=profile_id, user_id=g.user.id, deleted_at=None).first()
         if not item:
             return {'message': 'Profile not found'}, 404
         return serialize(item), 200
@@ -68,7 +68,7 @@ class ProfileDetail(Resource):
     @token_required
     def put(self, profile_id):
         """Update a profile"""
-        item = Profile.query.filter_by(id=profile_id, deleted_at=None).first()
+        item = Profile.query.filter_by(id=profile_id, user_id=g.user.id, deleted_at=None).first()
         if not item:
             return {'message': 'Profile not found'}, 404
         data = request.json
@@ -83,7 +83,7 @@ class ProfileDetail(Resource):
     @token_required
     def delete(self, profile_id):
         """Delete a profile"""
-        item = Profile.query.filter_by(id=profile_id, deleted_at=None).first()
+        item = Profile.query.filter_by(id=profile_id, user_id=g.user.id, deleted_at=None).first()
         if not item:
             return {'message': 'Profile not found'}, 404
         item.deleted_at = datetime.now(timezone.utc)

@@ -1,10 +1,10 @@
-from datetime import datetime, timezone
 from flask import g, request
 from flask_restx import Namespace, Resource, fields
-from db import db, Transaction
+from db import Transaction
+from db.models import Liability
 from utils.decorators import token_required
 from utils.context import get_active_profile
-from services.transaction_service import create_transaction
+from services.transaction_service import create_transaction, update_transaction, delete_transaction
 
 transactions_ns = Namespace('transactions', description='Transaction operations', path='/api/transactions')
 
@@ -50,11 +50,15 @@ class TransactionList(Resource):
     @transactions_ns.doc(security='Bearer')
     @token_required
     def get(self):
-        """List all transactions for the current user"""
-        items = Transaction.query.filter_by(
-            created_by=g.user.id,
-            deleted_at=None
-        ).order_by(Transaction.date.desc()).all()
+        """List transactions for the active profile"""
+        profile = get_active_profile(g.user.id)
+        items = Transaction.query \
+            .join(Liability, Transaction.id == Liability.transaction_id) \
+            .filter(
+                Liability.profile_id == profile.id,
+                Liability.deleted_at == None,
+                Transaction.deleted_at == None
+            ).order_by(Transaction.date.desc()).all()
         return [serialize(t) for t in items], 200
 
     @transactions_ns.doc(security='Bearer')
@@ -87,27 +91,16 @@ class TransactionDetail(Resource):
     @transactions_ns.expect(update_model)
     @token_required
     def put(self, transaction_id):
-        """Update a transaction"""
-        item = Transaction.query.filter_by(id=transaction_id, created_by=g.user.id, deleted_at=None).first()
+        """Update a transaction and its initial liability"""
+        item = update_transaction(transaction_id, g.user.id, request.json)
         if not item:
             return {'message': 'Transaction not found'}, 404
-        data = request.json
-        if 'date' in data:
-            item.date = datetime.fromisoformat(data['date'])
-        for field in ['title', 'amount', 'category_id', 'type_id', 'description']:
-            if field in data:
-                setattr(item, field, data[field])
-        item.updated_at = datetime.now(timezone.utc)
-        db.session.commit()
         return {'message': 'Transaction updated'}, 200
 
     @transactions_ns.doc(security='Bearer')
     @token_required
     def delete(self, transaction_id):
-        """Delete a transaction"""
-        item = Transaction.query.filter_by(id=transaction_id, created_by=g.user.id, deleted_at=None).first()
-        if not item:
+        """Delete a transaction and its liabilities"""
+        if not delete_transaction(transaction_id, g.user.id):
             return {'message': 'Transaction not found'}, 404
-        item.deleted_at = datetime.now(timezone.utc)
-        db.session.commit()
         return {'message': 'Transaction deleted'}, 200
