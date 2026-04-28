@@ -3,6 +3,8 @@ from flask import g, request
 from flask_restx import Namespace, Resource, fields
 from db import db, Transaction
 from utils.decorators import token_required
+from utils.context import get_active_profile
+from services.transaction_service import create_transaction
 
 transactions_ns = Namespace('transactions', description='Transaction operations', path='/api/transactions')
 
@@ -59,21 +61,15 @@ class TransactionList(Resource):
     @transactions_ns.expect(create_model)
     @token_required
     def post(self):
-        """Create a transaction"""
-        data = request.json
-        item = Transaction(
-            title=data['title'],
-            amount=data['amount'],
-            category_id=data['category_id'],
-            group_id=data.get('group_id'),
-            type_id=data['type_id'],
-            description=data.get('description'),
-            date=datetime.fromisoformat(data['date']) if data.get('date') else datetime.now(timezone.utc),
-            created_by=g.user.id,
-        )
-        db.session.add(item)
-        db.session.commit()
-        return {'message': 'Transaction created', 'id': str(item.id)}, 201
+        """Create a transaction and its initial liability"""
+        profile = get_active_profile(g.user.id)
+        try:
+            item = create_transaction(profile, g.user, request.json)
+            return {'message': 'Transaction created', 'id': str(item.id)}, 201
+        except ValueError as e:
+            return {'error': str(e)}, 400
+        except Exception as e:
+            return {'error': str(e)}, 500
 
 
 @transactions_ns.route('/<string:transaction_id>')
