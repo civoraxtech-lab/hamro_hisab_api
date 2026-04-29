@@ -109,10 +109,12 @@ class UserSearch(Resource):
         if len(q) < 2:
             return [], 200
         current_user_id = g.user.id
+        full_name = db.func.concat(User.firstname, ' ', User.lastname)
         users = User.query.filter(
             db.or_(
                 User.firstname.ilike(f'%{q}%'),
                 User.lastname.ilike(f'%{q}%'),
+                full_name.ilike(f'%{q}%'),
                 User.email.ilike(f'%{q}%'),
                 User.phone.ilike(f'%{q}%'),
                 User.code.ilike(f'%{q}%'),

@@ -147,3 +147,120 @@ class GroupService:
         item.deleted_at = datetime.now(timezone.utc)
         db.session.commit()
         return item
+
+    # ── Group transactions ─────────────────────────────────────────────────────
+
+    @staticmethod
+    def get_transactions(group_id):
+        from db.models import Transaction, Liability, Profile, User
+        txs = (
+            Transaction.query
+            .filter_by(group_id=group_id, deleted_at=None)
+            .order_by(Transaction.date.desc(), Transaction.created_at.desc())
+            .all()
+        )
+        result = []
+        for tx in txs:
+            liabilities = Liability.query.filter_by(
+                transaction_id=tx.id, deleted_at=None
+            ).all()
+
+            payer_liab = next((l for l in liabilities if l.initial_payer), None)
+            paid_by = None
+            if payer_liab:
+                profile = Profile.query.get(payer_liab.profile_id)
+                user = User.query.get(profile.user_id) if profile else None
+                if user:
+                    paid_by = {
+                        'profile_id': str(payer_liab.profile_id),
+                        'firstname': user.firstname,
+                        'lastname': user.lastname,
+                        'image': user.image,
+                    }
+
+            liab_list = []
+            for l in liabilities:
+                profile = Profile.query.get(l.profile_id)
+                user = User.query.get(profile.user_id) if profile else None
+                liab_list.append({
+                    'id': str(l.id),
+                    'profile_id': str(l.profile_id),
+                    'firstname': user.firstname if user else '',
+                    'lastname': user.lastname if user else '',
+                    'image': user.image if user else None,
+                    'settlement_amount': float(l.settlement_amount or 0),
+                    'settled_amount': float(l.settled_amount or 0),
+                    'initial_payer': l.initial_payer,
+                    'is_verified': l.is_verified,
+                })
+
+            result.append({
+                'id': str(tx.id),
+                'title': tx.title,
+                'amount': float(tx.amount),
+                'description': tx.description,
+                'date': str(tx.date or tx.created_at),
+                'paid_by': paid_by,
+                'liabilities': liab_list,
+            })
+        return result
+
+    @staticmethod
+    def create_group_transaction(group_id, data, current_profile):
+        from db.models import Transaction, Liability
+
+        title = (data.get('title') or '').strip()
+        amount = data.get('amount')
+        paid_by_profile_id = data.get('paid_by_profile_id')
+        member_profile_ids = data.get('member_profile_ids') or []
+        split_method = (data.get('split_method') or 'equal').lower()
+
+        if not title:
+            return {'message': 'title is required'}, 400
+        if not amount or float(amount) <= 0:
+            return {'message': 'amount must be positive'}, 400
+        if not paid_by_profile_id:
+            return {'message': 'paid_by_profile_id is required'}, 400
+        if not member_profile_ids:
+            return {'message': 'member_profile_ids is required'}, 400
+
+        tx = Transaction(
+            title=title,
+            amount=amount,
+            group_id=group_id,
+            description=data.get('description'),
+            date=datetime.fromisoformat(data['date']) if data.get('date') else datetime.now(timezone.utc),
+            profile_id=current_profile.id,
+        )
+        db.session.add(tx)
+        db.session.flush()
+
+        total = float(amount)
+        n = len(member_profile_ids)
+
+        if split_method == 'equal':
+            shares = {pid: round(total / n, 2) for pid in member_profile_ids}
+            # Fix rounding: assign remainder to payer
+            diff = round(total - sum(shares.values()), 2)
+            if str(paid_by_profile_id) in shares:
+                shares[str(paid_by_profile_id)] = round(shares[str(paid_by_profile_id)] + diff, 2)
+            else:
+                shares[str(member_profile_ids[0])] = round(shares[str(member_profile_ids[0])] + diff, 2)
+        elif split_method == 'exact':
+            exact = data.get('exact_amounts') or {}
+            shares = {str(pid): float(exact.get(str(pid), 0)) for pid in member_profile_ids}
+        else:
+            shares = {str(pid): round(total / n, 2) for pid in member_profile_ids}
+
+        for pid in member_profile_ids:
+            is_payer = str(pid) == str(paid_by_profile_id)
+            db.session.add(Liability(
+                transaction_id=tx.id,
+                profile_id=pid,
+                settlement_amount=shares.get(str(pid), 0),
+                settled_amount=total if is_payer else 0.0,
+                initial_payer=is_payer,
+            ))
+
+        db.session.commit()
+        return {'message': 'Transaction created', 'id': str(tx.id)}, 201

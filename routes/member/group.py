@@ -138,3 +138,32 @@ class GroupLeave(Resource):
         if not item:
             return {'message': 'You are not a member of this group'}, 404
         return {'message': 'Left group successfully'}, 200
+
+
+create_group_transaction_model = group_ns.model('CreateGroupTransaction', {
+    'title': fields.String(required=True, example='Hotel'),
+    'amount': fields.Float(required=True, example=3000.0),
+    'description': fields.String(example='3 nights stay'),
+    'paid_by_profile_id': fields.String(required=True, example='uuid-here'),
+    'member_profile_ids': fields.List(fields.String, required=True),
+    'split_method': fields.String(example='equal'),
+    'date': fields.String(example='2026-04-29T00:00:00'),
+})
+
+
+@group_ns.route('/<string:group_id>/transactions')
+class GroupTransactionList(Resource):
+    @group_ns.doc(security='Bearer')
+    @token_required
+    def get(self, group_id):
+        """List all transactions for a group"""
+        return GroupService.get_transactions(group_id), 200
+
+    @group_ns.doc(security='Bearer')
+    @group_ns.expect(create_group_transaction_model)
+    @token_required
+    def post(self, group_id):
+        """Create a group expense transaction"""
+        profile = get_active_profile(g.user.id)
+        result, status = GroupService.create_group_transaction(group_id, request.json, profile)
+        return result, status
