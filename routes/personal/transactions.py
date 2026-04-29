@@ -4,7 +4,7 @@ from db import Transaction
 from db.models import Liability
 from utils.decorators import token_required
 from utils.context import get_active_profile
-from services.transaction_service import create_transaction, update_transaction, delete_transaction
+from services.transaction_service import create, update, delete
 
 transactions_ns = Namespace('transactions', description='Transaction operations', path='/api/transactions')
 
@@ -28,7 +28,7 @@ update_model = transactions_ns.model('UpdateTransaction', {
 })
 
 
-def serialize(t):
+def _serialize(t):
     return {
         'id': str(t.id),
         'title': t.title,
@@ -52,14 +52,18 @@ class TransactionList(Resource):
     def get(self):
         """List transactions for the active profile"""
         profile = get_active_profile(g.user.id)
-        items = Transaction.query \
-            .join(Liability, Transaction.id == Liability.transaction_id) \
+        items = (
+            Transaction.query
+            .join(Liability, Transaction.id == Liability.transaction_id)
             .filter(
                 Liability.profile_id == profile.id,
                 Liability.deleted_at == None,
-                Transaction.deleted_at == None
-            ).order_by(Transaction.date.desc()).all()
-        return [serialize(t) for t in items], 200
+                Transaction.deleted_at == None,
+            )
+            .order_by(Transaction.date.desc())
+            .all()
+        )
+        return [_serialize(t) for t in items], 200
 
     @transactions_ns.doc(security='Bearer')
     @transactions_ns.expect(create_model)
@@ -68,7 +72,7 @@ class TransactionList(Resource):
         """Create a transaction and its initial liability"""
         profile = get_active_profile(g.user.id)
         try:
-            item = create_transaction(profile, request.json)
+            item = create(profile, request.json)
             return {'message': 'Transaction created', 'id': str(item.id)}, 201
         except ValueError as e:
             return {'error': str(e)}, 400
@@ -81,20 +85,30 @@ class TransactionDetail(Resource):
     @transactions_ns.doc(security='Bearer')
     @token_required
     def get(self, transaction_id):
-        """Get a transaction by ID"""
+        """Get a transaction by ID (must belong to active profile)"""
         profile = get_active_profile(g.user.id)
-        item = Transaction.query.filter_by(id=transaction_id, profile_id=profile.id, deleted_at=None).first()
+        item = (
+            Transaction.query
+            .join(Liability, Transaction.id == Liability.transaction_id)
+            .filter(
+                Liability.profile_id == profile.id,
+                Transaction.id == transaction_id,
+                Liability.deleted_at == None,
+                Transaction.deleted_at == None,
+            )
+            .first()
+        )
         if not item:
             return {'message': 'Transaction not found'}, 404
-        return serialize(item), 200
+        return _serialize(item), 200
 
     @transactions_ns.doc(security='Bearer')
     @transactions_ns.expect(update_model)
     @token_required
     def put(self, transaction_id):
-        """Update a transaction and its initial liability"""
+        """Update a transaction"""
         profile = get_active_profile(g.user.id)
-        item = update_transaction(transaction_id, profile.id, request.json)
+        item = update(transaction_id, profile.id, request.json)
         if not item:
             return {'message': 'Transaction not found'}, 404
         return {'message': 'Transaction updated'}, 200
@@ -104,6 +118,6 @@ class TransactionDetail(Resource):
     def delete(self, transaction_id):
         """Delete a transaction and its liabilities"""
         profile = get_active_profile(g.user.id)
-        if not delete_transaction(transaction_id, profile.id):
+        if not delete(transaction_id, profile.id):
             return {'message': 'Transaction not found'}, 404
         return {'message': 'Transaction deleted'}, 200
