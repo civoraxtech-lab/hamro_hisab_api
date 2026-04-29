@@ -1,0 +1,50 @@
+[33m27e50c3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33m81513ac[m HEAD@{1}: reset: moving to HEAD~3
+[33mc9f4509[m HEAD@{2}: reset: moving to HEAD~1
+[33mae18c7a[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/dheeraj[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mdheeraj[m[33m)[m HEAD@{3}: merge dheeraj: Fast-forward
+[33ma3100cb[m HEAD@{4}: checkout: moving from dheeraj to main
+[33mae18c7a[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/dheeraj[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mdheeraj[m[33m)[m HEAD@{5}: checkout: moving from main to dheeraj
+[33ma3100cb[m HEAD@{6}: checkout: moving from dheeraj to main
+[33mae18c7a[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/dheeraj[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mdheeraj[m[33m)[m HEAD@{7}: commit: updated
+[33mc9f4509[m HEAD@{8}: commit: routes,services, models
+[33ma3100cb[m HEAD@{9}: merge main: Fast-forward
+[33m38f42ad[m HEAD@{10}: checkout: moving from main to dheeraj
+[33ma3100cb[m HEAD@{11}: commit: testing
+[33mdaf7a8a[m HEAD@{12}: commit: testing
+[33m81513ac[m HEAD@{13}: commit: testing
+[33m27e50c3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{14}: commit: updated
+[33m1bdf33d[m HEAD@{15}: commit: updated
+[33md4a5475[m HEAD@{16}: pull origin main: Fast-forward
+[33m68fb34d[m HEAD@{17}: commit: all basic crud api set
+[33m38f42ad[m HEAD@{18}: merge dheeraj: Fast-forward
+[33m4ae701a[m HEAD@{19}: checkout: moving from dheeraj to main
+[33m38f42ad[m HEAD@{20}: commit: all crud api set
+[33mb47da17[m HEAD@{21}: merge main: Merge made by the 'ort' strategy.
+[33m4735aa3[m HEAD@{22}: checkout: moving from main to dheeraj
+[33m4ae701a[m HEAD@{23}: pull origin main: Fast-forward
+[33m1fde99b[m HEAD@{24}: checkout: moving from dheeraj to main
+[33m4735aa3[m HEAD@{25}: reset: moving to HEAD
+[33m4735aa3[m HEAD@{26}: commit: add gitignore and stop tracking sensitive files
+[33m8ff6c41[m HEAD@{27}: commit: add gitignore and stop tracking sensitive files
+[33m240ca2f[m HEAD@{28}: commit: updated
+[33m1fde99b[m HEAD@{29}: checkout: moving from main to dheeraj
+[33m1fde99b[m HEAD@{30}: checkout: moving from dheeraj to main
+[33m1fde99b[m HEAD@{31}: merge main: Fast-forward
+[33m848aba7[m HEAD@{32}: checkout: moving from main to dheeraj
+[33m1fde99b[m HEAD@{33}: commit: stop tracking ignored files
+[33mce68e3e[m HEAD@{34}: commit: untrack env, docker files
+[33m848aba7[m HEAD@{35}: checkout: moving from dheeraj to main
+[33m848aba7[m HEAD@{36}: merge main: Fast-forward
+[33m9eebc2d[m HEAD@{37}: checkout: moving from main to dheeraj
+[33m848aba7[m HEAD@{38}: commit: untrack env, docker files
+[33ma0f99bd[m HEAD@{39}: commit (merge): Initial commit
+[33m6b00c15[m HEAD@{40}: commit: Initial commit
+[33ma5fe6af[m HEAD@{41}: commit: merged dheeraj into main
+[33m9eebc2d[m HEAD@{42}: merge dheeraj: Fast-forward
+[33m9e2a7cd[m HEAD@{43}: checkout: moving from dheeraj to main
+[33m9eebc2d[m HEAD@{44}: pull origin dheeraj: Fast-forward
+[33m7b143f8[m HEAD@{45}: commit: docker ready
+[33m9e2a7cd[m HEAD@{46}: checkout: moving from main to dheeraj
+[33m9e2a7cd[m HEAD@{47}: commit: dheeraj first commit
+[33m7a922da[m HEAD@{48}: commit: dheeraj first commit
+[33m6dd8e1f[m HEAD@{49}: clone: from https://github.com/civoraxtech-lab/hamro_hisab_api.git
