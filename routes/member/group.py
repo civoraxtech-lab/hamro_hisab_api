@@ -119,12 +119,13 @@ class GroupInvite(Resource):
     def post(self, group_id):
         """Invite a user to a group by user_id"""
         user_id = request.json.get('user_id')
-        item, status_code = GroupService.invite_user(group_id, user_id)
+        profile = get_active_profile(g.user.id)
+        item, status_code = GroupService.invite_user(group_id, user_id, invited_by_profile_id=profile.id)
         if status_code == 404:
-            return {'message': 'User has no profile'}, 404
+            return {'message': 'User not found'}, 404
         if status_code == 409:
-            return {'message': 'User is already a member of this group'}, 409
-        return {'message': 'Member invited successfully'}, 201
+            return item if isinstance(item, dict) else {'message': 'Already invited or a member'}, 409
+        return {'message': 'Invitation sent'}, 201
 
 
 @group_ns.route('/<string:group_id>/leave')
@@ -144,7 +145,8 @@ create_group_transaction_model = group_ns.model('CreateGroupTransaction', {
     'title': fields.String(required=True, example='Hotel'),
     'amount': fields.Float(required=True, example=3000.0),
     'description': fields.String(example='3 nights stay'),
-    'paid_by_profile_id': fields.String(required=True, example='uuid-here'),
+    'paid_by_amounts': fields.Raw(example={'uuid-A': 750.0, 'uuid-B': 750.0}),
+    'paid_by_profile_id': fields.String(example='uuid-here'),  # kept for backward compat
     'member_profile_ids': fields.List(fields.String, required=True),
     'split_method': fields.String(example='equal'),
     'date': fields.String(example='2026-04-29T00:00:00'),

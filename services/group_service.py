@@ -113,18 +113,17 @@ class GroupService:
         return item, 201
 
     @staticmethod
-    def invite_user(group_id, user_id):
-        from db.models import Profile
-        profile = Profile.query.filter_by(user_id=user_id, is_default=True, deleted_at=None).first()
-        if not profile:
-            profile = Profile.query.filter_by(user_id=user_id, deleted_at=None).first()
-        if not profile:
+    def invite_user(group_id, user_id, invited_by_profile_id=None):
+        from db.models import User
+        from services.invitation_service import InvitationService
+        user = User.query.filter_by(id=user_id, deleted_at=None).first()
+        if not user:
             return None, 404
-        member_role = GroupRole.query.filter_by(name='MEMBER', deleted_at=None).first()
-        return GroupService.add_member(group_id, {
-            'profile_id': str(profile.id),
-            'role_id': str(member_role.id) if member_role else None,
-        })
+        try:
+            inv = InvitationService.create(group_id, user_id, invited_by_profile_id)
+            return inv, 201
+        except ValueError as e:
+            return {'message': str(e)}, 409
 
     @staticmethod
     def leave_group(group_id, profile_id):
@@ -211,7 +210,8 @@ class GroupService:
 
         title = (data.get('title') or '').strip()
         amount = data.get('amount')
-        paid_by_profile_id = data.get('paid_by_profile_id')
+        paid_by_amounts = data.get('paid_by_amounts') or {}
+        paid_by_profile_id = data.get('paid_by_profile_id')  # backward compat
         member_profile_ids = data.get('member_profile_ids') or []
         split_method = (data.get('split_method') or 'equal').lower()
 
@@ -219,10 +219,18 @@ class GroupService:
             return {'message': 'title is required'}, 400
         if not amount or float(amount) <= 0:
             return {'message': 'amount must be positive'}, 400
-        if not paid_by_profile_id:
-            return {'message': 'paid_by_profile_id is required'}, 400
+
+        # Support old single-payer format for backward compatibility
+        if not paid_by_amounts and paid_by_profile_id:
+            paid_by_amounts = {str(paid_by_profile_id): float(amount)}
+
+        if not paid_by_amounts:
+            return {'message': 'paid_by_amounts is required'}, 400
         if not member_profile_ids:
             return {'message': 'member_profile_ids is required'}, 400
+
+        # Normalise keys to strings
+        paid_by_amounts = {str(k): float(v) for k, v in paid_by_amounts.items()}
 
         tx = Transaction(
             title=title,
@@ -239,13 +247,14 @@ class GroupService:
         n = len(member_profile_ids)
 
         if split_method == 'equal':
-            shares = {pid: round(total / n, 2) for pid in member_profile_ids}
-            # Fix rounding: assign remainder to payer
+            shares = {str(pid): round(total / n, 2) for pid in member_profile_ids}
+            # Fix rounding: assign remainder to first payer who is also a member
             diff = round(total - sum(shares.values()), 2)
-            if str(paid_by_profile_id) in shares:
-                shares[str(paid_by_profile_id)] = round(shares[str(paid_by_profile_id)] + diff, 2)
-            else:
-                shares[str(member_profile_ids[0])] = round(shares[str(member_profile_ids[0])] + diff, 2)
+            first_payer = next(
+                (pid for pid in paid_by_amounts if pid in shares),
+                str(member_profile_ids[0]),
+            )
+            shares[first_payer] = round(shares[first_payer] + diff, 2)
         elif split_method == 'exact':
             exact = data.get('exact_amounts') or {}
             shares = {str(pid): float(exact.get(str(pid), 0)) for pid in member_profile_ids}
@@ -253,13 +262,13 @@ class GroupService:
             shares = {str(pid): round(total / n, 2) for pid in member_profile_ids}
 
         for pid in member_profile_ids:
-            is_payer = str(pid) == str(paid_by_profile_id)
+            settled = paid_by_amounts.get(str(pid), 0.0)
             db.session.add(Liability(
                 transaction_id=tx.id,
                 profile_id=pid,
                 settlement_amount=shares.get(str(pid), 0),
-                settled_amount=total if is_payer else 0.0,
-                initial_payer=is_payer,
+                settled_amount=settled,
+                initial_payer=settled > 0,
             ))
 
         db.session.commit()
