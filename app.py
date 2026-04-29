@@ -9,6 +9,7 @@ from routes import (
     auth_ns, users_ns, profiles_ns, categories_ns,
     group_ns, transaction_types_ns, liabilities_ns,
     subscriptions_ns, subscription_types_ns, subscription_codes_ns, roles_ns,
+    invitations_ns,
     # personal
     personal_ns, transactions_ns,
     # admin
@@ -37,6 +38,7 @@ def create_app():
         auth_ns, users_ns, profiles_ns, categories_ns,
         group_ns, transaction_types_ns, liabilities_ns,
         subscriptions_ns, subscription_types_ns, subscription_codes_ns, roles_ns,
+        invitations_ns,
         # personal
         personal_ns, transactions_ns,
         # admin

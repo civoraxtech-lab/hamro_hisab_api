@@ -12,9 +12,10 @@ from .subscription_types import SubscriptionType
 from .subscriptions import Subscription
 from .transaction_types import TransactionType
 from .transactions import Transaction
+from .group_invitations import GroupInvitation
 
 __all__ = ['UserRole','User', 'Category', 'GroupMember', 'Group',
             'Liability', 'OneTimePassword', 'GroupRole', 'SubscriptionCode',
-            'SubscriptionType', 'Subscription', 'TransactionType', 
-            'Transaction', 'Profile'
+            'SubscriptionType', 'Subscription', 'TransactionType',
+            'Transaction', 'Profile', 'GroupInvitation'
 ]

@@ -10,6 +10,7 @@ from .member.subscriptions import subscriptions_ns
 from .member.subscription_types import subscription_types_ns
 from .member.subscription_codes import subscription_codes_ns
 from .member.roles import roles_ns
+from .member.invitations import invitations_ns
 
 # personal namespaces
 from .personal.dashboard import personal_ns
