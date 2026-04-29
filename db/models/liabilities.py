@@ -12,7 +12,9 @@ class Liability(db.Model):
     settlement_amount = db.Column(db.Numeric(15, 2))
     settled_amount = db.Column(db.Numeric(15, 2), default=0.0)
     initial_payer = db.Column(db.Boolean, default=False)
-    is_verified = db.Column(db.Boolean, default=False)
+    verification_status = db.Column(db.String(20), default='approved')
+    verified_via = db.Column(db.String(10))
+    verified_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime)
     deleted_at = db.Column(db.DateTime)
@@ -28,6 +30,8 @@ class Liability(db.Model):
             'settlement_amount': float(self.settlement_amount) if self.settlement_amount else None,
             'settled_amount': float(self.settled_amount) if self.settled_amount else 0.0,
             'initial_payer': self.initial_payer,
-            'is_verified': self.is_verified,
+            'verification_status': self.verification_status or 'approved',
+            'verified_via': self.verified_via,
+            'verified_at': str(self.verified_at) if self.verified_at else None,
             'created_at': str(self.created_at)
         }

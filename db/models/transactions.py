@@ -19,6 +19,7 @@ class Transaction(db.Model):
     deleted_at = db.Column(db.DateTime)
 
     profile_id = db.Column(UUID(as_uuid=True), db.ForeignKey('profiles.id'))
+    status = db.Column(db.String(20), default='approved')
 
     category = db.relationship('Category', backref='transactions')
     group = db.relationship('Group', backref='transactions')

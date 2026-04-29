@@ -141,6 +141,33 @@ class GroupLeave(Resource):
         return {'message': 'Left group successfully'}, 200
 
 
+join_group_model = group_ns.model('JoinGroup', {
+    'profile_id': fields.String(required=True, example='uuid-here'),
+})
+
+
+@group_ns.route('/<string:group_id>/join')
+class GroupJoin(Resource):
+    @group_ns.doc(security='Bearer')
+    @group_ns.expect(join_group_model)
+    @token_required
+    def post(self, group_id):
+        """Join a group via QR code scan"""
+        data = request.json or {}
+        profile_id = data.get('profile_id')
+        if not profile_id:
+            profile = get_active_profile(g.user.id)
+            profile_id = str(profile.id)
+        result, status = GroupService.join_group_by_qr(group_id, profile_id)
+        return result, status
+
+
+verify_liability_model = group_ns.model('VerifyLiability', {
+    'action': fields.String(required=True, example='approve', description='approve or reject'),
+    'code': fields.String(example='ABC123', description='offline member unique code (optional for live verification)'),
+})
+
+
 create_group_transaction_model = group_ns.model('CreateGroupTransaction', {
     'title': fields.String(required=True, example='Hotel'),
     'amount': fields.Float(required=True, example=3000.0),
@@ -149,6 +176,9 @@ create_group_transaction_model = group_ns.model('CreateGroupTransaction', {
     'paid_by_profile_id': fields.String(example='uuid-here'),  # kept for backward compat
     'member_profile_ids': fields.List(fields.String, required=True),
     'split_method': fields.String(example='equal'),
+    'exact_amounts': fields.Raw(example={'uuid-A': 500.0}),
+    'type_id': fields.String(example='uuid-here'),
+    'category_id': fields.String(example='uuid-here'),
     'date': fields.String(example='2026-04-29T00:00:00'),
 })
 
@@ -168,4 +198,36 @@ class GroupTransactionList(Resource):
         """Create a group expense transaction"""
         profile = get_active_profile(g.user.id)
         result, status = GroupService.create_group_transaction(group_id, request.json, profile)
+        return result, status
+
+
+@group_ns.route('/<string:group_id>/transactions/<string:tx_id>')
+class GroupTransactionDetail(Resource):
+    @group_ns.doc(security='Bearer')
+    @group_ns.expect(create_group_transaction_model)
+    @token_required
+    def put(self, group_id, tx_id):
+        """Update a group transaction"""
+        profile = get_active_profile(g.user.id)
+        result, status = GroupService.update_group_transaction(group_id, tx_id, request.json, profile)
+        return result, status
+
+    @group_ns.doc(security='Bearer')
+    @token_required
+    def delete(self, group_id, tx_id):
+        """Delete a group transaction (admin or initiator only)"""
+        profile = get_active_profile(g.user.id)
+        result, status = GroupService.delete_group_transaction(group_id, tx_id, profile)
+        return result, status
+
+
+@group_ns.route('/<string:group_id>/transactions/<string:tx_id>/liabilities/<string:liability_id>/verify')
+class LiabilityVerify(Resource):
+    @group_ns.doc(security='Bearer')
+    @group_ns.expect(verify_liability_model)
+    @token_required
+    def post(self, group_id, tx_id, liability_id):
+        """Approve or reject a liability (online or via offline member code)"""
+        profile = get_active_profile(g.user.id)
+        result, status = GroupService.verify_liability(group_id, tx_id, liability_id, request.json, profile)
         return result, status
