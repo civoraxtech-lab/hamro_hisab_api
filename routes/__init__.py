@@ -15,6 +15,7 @@ from .member.invitations import invitations_ns
 # personal namespaces
 from .personal.dashboard import personal_ns
 from .personal.transactions import transactions_ns
+from .personal.settings import settings_ns
 
 # admin namespaces
 from .admin.categories import admin_categories_ns

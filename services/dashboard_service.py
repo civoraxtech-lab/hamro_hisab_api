@@ -1,6 +1,7 @@
 from db import db
 from db.models import Transaction, Liability, Group, GroupMember, Profile
 from sqlalchemy.orm import joinedload
+from datetime import datetime, timezone
 
 
 class DashboardService:
@@ -35,12 +36,19 @@ class DashboardService:
         )
 
         totals = _compute_totals(profile.id)
+        alerts = _compute_alerts(profile.id)
 
         return {
             'profile': {'id': str(profile.id), 'name': profile.name},
             'totals': totals,
+            # flat fields the Flutter app expects:
+            'net_balance': totals['net_balance'],
+            'you_owe': totals['you_owe'],
+            'youll_get': totals['youll_get'],
+            'monthly_spending': totals['monthly_spending'],
             'recent_transactions': [_serialize_tx(t) for t in recent_transactions],
             'recent_groups': [_serialize_group(g) for g in recent_groups],
+            'alerts': alerts,
         }
 
 
@@ -56,10 +64,68 @@ def _compute_totals(profile_id):
         for l in liabilities
         if l.initial_payer
     )
+
+    monthly_spending = _compute_monthly_spending(profile_id)
+
     return {
         'total_owed': round(total_owed, 2),
         'total_receivable': round(total_receivable, 2),
+        'net_balance': round(total_receivable - total_owed, 2),
+        'you_owe': round(total_owed, 2),
+        'youll_get': round(total_receivable, 2),
+        'monthly_spending': monthly_spending,
     }
+
+
+def _compute_monthly_spending(profile_id):
+    now = datetime.now(timezone.utc)
+    try:
+        monthly_txs = (
+            Transaction.query
+            .join(Liability, Transaction.id == Liability.transaction_id)
+            .filter(
+                Liability.profile_id == profile_id,
+                Liability.deleted_at == None,
+                Transaction.deleted_at == None,
+                db.extract('year', Transaction.date) == now.year,
+                db.extract('month', Transaction.date) == now.month,
+            )
+            .all()
+        )
+        return round(sum(float(t.amount or 0) for t in monthly_txs), 2)
+    except Exception:
+        return 0.0
+
+
+def _compute_alerts(profile_id):
+    alerts = []
+    try:
+        pending = (
+            Liability.query
+            .filter(
+                Liability.profile_id == profile_id,
+                Liability.deleted_at == None,
+                Liability.initial_payer == False,
+            )
+            .options(joinedload(Liability.transaction))
+            .limit(10)
+            .all()
+        )
+        for l in pending:
+            remaining = float(l.settlement_amount or 0) - float(l.settled_amount or 0)
+            if remaining > 0:
+                tx = l.transaction
+                tx_title = tx.title if tx else 'a transaction'
+                alerts.append({
+                    'id': str(l.id),
+                    'title': f'You owe NPR {remaining:.0f}',
+                    'subtitle': f'For {tx_title}',
+                    'time': tx.date.isoformat() if tx and tx.date else '',
+                    'type': 'settle_reminder',
+                })
+    except Exception:
+        pass
+    return alerts
 
 
 def _serialize_tx(t):

@@ -42,10 +42,13 @@ class ProfileList(Resource):
     def post(self):
         """Create a profile"""
         data = request.json
+        is_default = data.get('is_default', False)
+        if is_default:
+            Profile.query.filter_by(user_id=g.user.id, deleted_at=None).update({'is_default': False})
         item = Profile(
             user_id=g.user.id,
             name=data['name'],
-            is_default=data.get('is_default', False)
+            is_default=is_default
         )
         db.session.add(item)
         db.session.commit()
@@ -72,6 +75,12 @@ class ProfileDetail(Resource):
         if not item:
             return {'message': 'Profile not found'}, 404
         data = request.json
+        if data.get('is_default'):
+            Profile.query.filter(
+                Profile.user_id == g.user.id,
+                Profile.id != item.id,
+                Profile.deleted_at == None
+            ).update({'is_default': False})
         for field in ['name', 'is_default']:
             if field in data:
                 setattr(item, field, data[field])
